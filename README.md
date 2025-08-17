@@ -1,97 +1,60 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# AwesomeProject
 
-# Getting Started
+## Why Avoid Destructuring Multiple Properties from useStoreCart
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+When using Zustand (or similar state management libraries), destructuring multiple properties from a store like this:
 
-## Step 1: Start Metro
-
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```ts
+const { addProduct, products, addProduct } = useStoreCart();
 ```
 
-## Step 2: Build and run your app
+causes the component to subscribe to the entire store object. This means **any change in the store** (even if unrelated to the property you care about) will trigger a re-render of your component. For example, if `addProduct` changes its reference, it will force a re-render, even if `products` did not change. This is especially problematic for components like FlatList, which rely on stable references to avoid unnecessary re-renders of their items.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Example of the Problem
 
-### Android
+Suppose you have:
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```ts
+const { addProduct, products } = useStoreCart();
 ```
 
-### iOS
+Every time `addProduct` changes (e.g., due to a new function reference), the component re-renders, causing FlatList to re-render all its items, even if `products` did not change. This leads to performance issues and a poor user experience.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+### Recommended Approach: Select State Slices Individually
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+Instead, select only the state you need:
 
-```sh
-bundle install
+```ts
+const getProducts = useStoreCart(state => state.getProducts);
+const products = useStoreCart(state => state.products);
+const addProduct = useStoreCart(state => state.addProduct);
 ```
 
-Then, and every time you update your native dependencies, run:
+This way, your component only re-renders when the specific slice of state changes. For example, if `products` changes, only the relevant part of your component updates. If `addProduct` changes, it does not affect the rendering of the product list.
 
-```sh
-bundle exec pod install
+#### Example from `ProductScreen.tsx`
+
+```ts
+const getProducts = useStoreCart(state => state.getProducts);
+const products = useStoreCart(state => state.products);
+const addProduct = useStoreCart(state => state.addProduct);
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+This pattern ensures that FlatList only re-renders when `products` changes, not when unrelated store properties change.
 
-```sh
-# Using npm
-npm run ios
+### Alternative: Use Memoized Components
 
-# OR using Yarn
-yarn ios
+If you cannot change the destructuring pattern, you can use memoized components to prevent unnecessary re-renders. For example, in your project, you use `ProductItemMemo`:
+
+```ts
+<ProductItemMemo item={item} onAdd={addProduct} />
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Memoized components like `ProductItemMemo` help avoid re-rendering individual items unless their props actually change.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Summary
+- **Destructuring multiple properties from the store** causes your component to re-render on any store change.
+- **Selecting state slices individually** ensures your component only re-renders when the relevant state changes.
+- **Memoized components** (like `ProductItemMemo`) can help mitigate unnecessary re-renders if you cannot change the destructuring pattern.
 
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Use these patterns to improve performance and avoid unnecessary UI updates in your React Native screens.
