@@ -5,15 +5,23 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
+    "ios:simulator": "react-native run-ios --simulator 'iPhone 16 Pro Max'",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-masked-view/masked-view": "^0.3.2",
+    "@react-native/new-app-screen": "0.81.0",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/stack": "^7.4.7",
     "react": "19.1.0",
     "react-native": "0.81.0",
-    "@react-native/new-app-screen": "0.81.0",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-gesture-handler": "^2.28.0",
+    "react-native-safe-area-context": "^5.6.0",
+    "react-native-screens": "^4.14.1",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
